@@ -31,9 +31,14 @@ public class Armvisualiser extends SimpleApplication {
         app.start(); // Starts the app. Runs simpleInitApp()
     }
 
+    /**
+     * JME's built-in rotation system doesn't suit our usage, so I've made my own rotation tracker
+     */
+    private double arm1AngleRad = Constants.ArmConstants.ARM_1_INITIAL_ANGLE * FastMath.DEG_TO_RAD, arm2AngleRad = Constants.ArmConstants.ARM_2_INITIAL_ANGLE * FastMath.DEG_TO_RAD;
+
     // These need global scope for access in other locations.
     private Geometry clawGeom;
-    private Node arm1, arm2;
+    private Node baseNode, arm1, arm2;
     private BitmapText hudText;
 
     /**
@@ -55,7 +60,7 @@ public class Armvisualiser extends SimpleApplication {
         Geometry baseTowerGeom = new Geometry("Box", baseTower);
 
         // These nodes allow me to rotate things independently of each other around a known point, and to find the world-relative coordinates of parts.
-        Node baseNode = new Node("baseNode");
+        baseNode = new Node("baseNode");
 
         arm1 = new Node("arm1");
         arm2 = new Node("arm2");
@@ -166,23 +171,27 @@ public class Armvisualiser extends SimpleApplication {
      * This method updates the HUD text. The text has a few modifications made to it to correct obvious errors caused by our 3D model (such as angles being negative).
      */
     private void updateHUDText() {
-        var arm1AngDeg = arm1.getLocalRotation().toAngles(null);
-        var arm2AngDeg = arm2.getLocalRotation().toAngles(null);
-        var turretAngDeg = rootNode.getLocalRotation().toAngles(null);
+        var tempTurretAngDeg = baseNode.getLocalRotation().toAngles(null);
 
         // This is a bit of a hack, but since our arm1 limb is inverted, the rotation needs to be un-inverted properly.
         // The other ones have other weird tidbits applied to them, but this works
-        double arm1AngleDeg = Math.abs((arm1AngDeg[2] * FastMath.RAD_TO_DEG) % 360) % 180;
-        double arm2AngleDeg = Math.abs(arm2AngDeg[2] * FastMath.RAD_TO_DEG);
-        double turretAngleDeg = (360 - turretAngDeg[1] * FastMath.RAD_TO_DEG) % 360;
+        double arm1AngleDeg = Math.abs(arm1AngleRad * FastMath.RAD_TO_DEG) % 360; // Math.abs((tempArm1AngDeg[2] * FastMath.RAD_TO_DEG) % 360) % 180;
+        double arm2AngleDeg = Math.abs(arm2AngleRad * FastMath.RAD_TO_DEG) % 360; // Math.abs(tempArm2AngDeg[2] * FastMath.RAD_TO_DEG);
+        double turretAngleDeg = (360 - tempTurretAngDeg[1] * FastMath.RAD_TO_DEG) % 360;
+
+        boolean isFlipped = arm2AngleDeg > 180;
+        if(arm1AngleDeg > 180) {
+            arm1AngleDeg = 360 - arm1AngleDeg;
+        }
 
         double[] fkuValues = ForwardKinematicsUtil.getCoordinatesFromAngles(arm1AngleDeg, arm2AngleDeg, turretAngleDeg);
 
         var clawLocation = clawGeom.getWorldTranslation();
-        double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(clawLocation.x, clawLocation.y, clawLocation.z, false);
+
+        double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(clawLocation.x, clawLocation.y, clawLocation.z, isFlipped);
 
         // Updates the text
-        hudText.setText("VALUES:\nIKU (DEG): " + ikuValues[0] + ", " + ikuValues[1] + ", " + ikuValues[2]
+        hudText.setText("VALUES:\nIKU (DEG): " + ikuValues[0] + ", " + ikuValues[1] + ", " + ikuValues[2] + ", flipped: " + isFlipped
                 + "\nFKU (POS): " + fkuValues[0] + ", " + (42 + fkuValues[1]) + ", " + fkuValues[2]
                 + "\n\nREAL:\nANGLES (DEG): Arm1: " + arm1AngleDeg + ", Arm2: " + arm2AngleDeg + ", Turret: " + turretAngleDeg
                 + "\nPOSITION: " + clawLocation.x + ", " + clawLocation.y + ", " + clawLocation.z
@@ -195,29 +204,34 @@ public class Armvisualiser extends SimpleApplication {
     private final AnalogListener analogListener = new AnalogListener() {
         @Override
         public void onAnalog(String name, float value, float tpf) {
+            value *= 2f;
             switch (name) {
                 case "Arm1+":
                     arm1.rotate(0, 0, value);
+                    arm1AngleRad += value;
                     updateHUDText();
                     break;
                 case "Arm1-":
                     arm1.rotate(0, 0, -value);
+                    arm1AngleRad -= value;
                     updateHUDText();
                     break;
                 case "Arm2+":
                     arm2.rotate(0, 0, value);
+                    arm2AngleRad -= value;
                     updateHUDText();
                     break;
                 case "Arm2-":
                     arm2.rotate(0, 0, -value);
+                    arm2AngleRad += value;
                     updateHUDText();
                     break;
                 case "Turret+":
-                    rootNode.rotate(0, value, 0);
+                    baseNode.rotate(0, value, 0);
                     updateHUDText();
                     break;
                 case "Turret-":
-                    rootNode.rotate(0, -value, 0);
+                    baseNode.rotate(0, -value, 0);
                     updateHUDText();
                     break;
             }
