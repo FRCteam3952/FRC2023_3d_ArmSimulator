@@ -12,7 +12,7 @@ package frc.team3952;
  * <p>It is advised to statically import this class (or one of its inner classes) wherever the
  * constants are needed, to reduce verbosity.
  */
-@SuppressWarnings("unused")
+
 public final class Constants {
     /**
      * Constants for the Arm
@@ -24,18 +24,8 @@ public final class Constants {
         public static final double LIMB1_LENGTH = 32.5;
         public static final double LIMB2_LENGTH = 19.5;
 
-        public static final double ANGLE_DELTA = 2;
         public static final double MIN_HOR_DISTANCE = 5; // change to be correct later
         public static final double MAX_REACH_REDUCTION = 2; // change to be correct later
-
-        public static final double PIVOT_SPEED = 0.1;
-        public static final double TURRET_SPEED = 0.1;
-
-        public static final double STARTING_X = 0;
-        public static final double STARTING_Y = 0;
-        public static final double STARTING_Z = 0;
-
-        public static final double PICK_UP_POSITION_Y = 5;
 
         public static final double ARM_1_INITIAL_ANGLE = 10.0;
         public static final double ARM_2_INITIAL_ANGLE = 20.0;
