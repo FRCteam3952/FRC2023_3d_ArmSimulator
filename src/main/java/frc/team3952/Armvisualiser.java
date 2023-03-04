@@ -107,7 +107,7 @@ public class Armvisualiser extends SimpleApplication {
         Box base = new Box(1, 1, 1); // This is the base of the arm
         Geometry baseGeom = new Geometry("Box", base);
 
-        Box baseTower = new Box(1, 0.5f * (float) Constants.ArmConstants.ORIGIN_HEIGHT * 1, 1); // The supporting beam of the arm
+        Box baseTower = new Box(1, 0.5f * (float) Constants.ArmConstants.ORIGIN_HEIGHT, 1); // The supporting beam of the arm
         Geometry baseTowerGeom = new Geometry("Box", baseTower);
 
         // These nodes allow me to rotate things independently of each other around a known point, and to find the world-relative coordinates of parts.
@@ -117,10 +117,10 @@ public class Armvisualiser extends SimpleApplication {
         arm2 = new Node("arm2");
         Node claw = new Node("claw");
 
-        Box limb1 = new Box(1, 0.5f * (float) Constants.ArmConstants.LIMB1_LENGTH * 1, 1); // Arm limb 1
+        Box limb1 = new Box(1, 0.5f * (float) Constants.ArmConstants.LIMB1_LENGTH, 1); // Arm limb 1
         Geometry limb1Geom = new Geometry("Box", limb1);
 
-        Box limb2 = new Box(1, 0.5f * (float) Constants.ArmConstants.LIMB2_LENGTH * 1, 1); // Arm limb 2
+        Box limb2 = new Box(1, 0.5f * (float) Constants.ArmConstants.LIMB2_LENGTH, 1); // Arm limb 2
         Geometry limb2Geom = new Geometry("Box", limb2);
 
         Box clawB = new Box(1, 1, 1); // The claw (a box)
@@ -148,12 +148,12 @@ public class Armvisualiser extends SimpleApplication {
         baseNode.center(); // Make sure the base of the arm is at the origin
 
         // This moves the items into the correct position relative to each other
-        baseTowerGeom.move(0, ((float) Constants.ArmConstants.ORIGIN_HEIGHT * 1) / 2, 0);
-        arm1.move(0, ((float) Constants.ArmConstants.ORIGIN_HEIGHT * 1), 0);
-        arm2.move(0, ((float) Constants.ArmConstants.LIMB1_LENGTH * 1), 0);
-        claw.move(0, ((float) Constants.ArmConstants.LIMB2_LENGTH * 1), 0);
-        limb1Geom.move(0, ((float) Constants.ArmConstants.LIMB1_LENGTH * 1) / 2, 0);
-        limb2Geom.move(0, ((float) Constants.ArmConstants.LIMB2_LENGTH * 1) / 2, 0);
+        baseTowerGeom.move(0, ((float) Constants.ArmConstants.ORIGIN_HEIGHT) / 2, 0);
+        arm1.move(0, ((float) Constants.ArmConstants.ORIGIN_HEIGHT), 0);
+        arm2.move(0, ((float) Constants.ArmConstants.LIMB1_LENGTH), 0);
+        claw.move(0, ((float) Constants.ArmConstants.LIMB2_LENGTH), 0);
+        limb1Geom.move(0, ((float) Constants.ArmConstants.LIMB1_LENGTH) / 2, 0);
+        limb2Geom.move(0, ((float) Constants.ArmConstants.LIMB2_LENGTH) / 2, 0);
 
         // Set the rotation of the arm limbs to their initial positions. This code works
         arm1.rotate(0, 0, (float) Math.toRadians(180f + Constants.ArmConstants.ARM_1_INITIAL_ANGLE));
