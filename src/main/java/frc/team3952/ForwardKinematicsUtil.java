@@ -23,7 +23,9 @@ public final class ForwardKinematicsUtil {
         double y = -ArmConstants.LIMB1_LENGTH * Math.cos(Math.toRadians(a1)) + ArmConstants.LIMB2_LENGTH * Math.cos(Math.toRadians(a2 - a1));
         double x = ArmConstants.LIMB1_LENGTH * Math.sin(Math.toRadians(a1)) + ArmConstants.LIMB2_LENGTH * Math.sin(Math.toRadians(a2 - a1));
 
-        // Solve for the distance from origin -> claw
-        return new double[]{x, y, z};
+        // Rotate the coordinates by the turret angle
+        double[] rotated = MathUtil.rotatePoint(x, z, turretAngle);
+
+        return new double[]{rotated[0], y, rotated[1]};
     }
 }
