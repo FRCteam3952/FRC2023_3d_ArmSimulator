@@ -3,12 +3,14 @@ package frc.team3952;
 import com.jme3.app.SimpleApplication;
 import com.jme3.font.BitmapText;
 import com.jme3.input.KeyInput;
+import com.jme3.input.controls.ActionListener;
 import com.jme3.input.controls.AnalogListener;
 import com.jme3.input.controls.KeyTrigger;
 import com.jme3.light.DirectionalLight;
 import com.jme3.material.Material;
 import com.jme3.math.ColorRGBA;
 import com.jme3.math.FastMath;
+import com.jme3.math.Quaternion;
 import com.jme3.math.Vector3f;
 import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.queue.RenderQueue;
@@ -26,7 +28,7 @@ public class Armvisualiser extends SimpleApplication {
     /**
      * JME's built-in rotation system doesn't suit our usage, so I've made my own rotation tracker
      */
-    private double arm1AngleRad = Constants.ArmConstants.ARM_1_INITIAL_ANGLE * FastMath.DEG_TO_RAD, arm2AngleRad = Constants.ArmConstants.ARM_2_INITIAL_ANGLE * FastMath.DEG_TO_RAD;
+    private double arm1AngleRad = Constants.ArmConstants.ARM_1_INITIAL_ANGLE * FastMath.DEG_TO_RAD, arm2AngleRad = Constants.ArmConstants.ARM_2_INITIAL_ANGLE * FastMath.DEG_TO_RAD, turretAngleRad = 0.0;
 
     // These need global scope for access in other locations.
     private Geometry clawGeom, targetPointGeom;
@@ -36,12 +38,26 @@ public class Armvisualiser extends SimpleApplication {
     /**
      * The target position of the claw. Initialized to the claw's starting position.
      */
-    private double targetX = 9.0297d, targetY = 29.1975d, targetZ = 0;
+    private double targetX = 9.0297d, targetY = 29.1975d;
+    private boolean isFlipped = false;
+
+    private final ActionListener actionListener = (name, pressed, tpf) -> {
+        if (pressed) {
+            return;
+        }
+        //noinspection SwitchStatementWithTooFewBranches
+        switch(name) {
+            case "Flip":
+                isFlipped = !isFlipped;
+                ikuUpdateAngles();
+        }
+    };
 
     /**
      * This handles keybinds to make changes appear on the model.
      */
     private final AnalogListener analogListener = (name, value, tpf) -> {
+        value *= 2;
         switch (name) {
             case "X+":
                 targetX += 0.2;
@@ -55,15 +71,14 @@ public class Armvisualiser extends SimpleApplication {
             case "Y-":
                 targetY -= 0.2;
                 break;
-            case "Z+":
-                targetZ += 0.2;
+            case "Turret+":
+                rotateTurret(value);
                 break;
-            case "Z-":
-                targetZ -= 0.2;
+            case "Turret-":
+                rotateTurret(-value);
                 break;
         }
         updateTarget();
-        updateHUDText();
     };
 
     public static void main(String[] args) {
@@ -90,6 +105,57 @@ public class Armvisualiser extends SimpleApplication {
     private void rotateArm2(double angle) {
         arm2AngleRad -= angle; // bruh idk why but this needs to be done???
         arm2.rotate(0, 0, (float) angle);
+    }
+
+    /**
+     * Rotates node baseNode
+     * @param angle radians
+     */
+    private void rotateTurret(double angle) {
+        turretAngleRad += angle;
+        baseNode.rotate(0, (float) angle, 0);
+    }
+
+    private void resetArm1() {
+        arm1.setLocalRotation(new Quaternion());
+        arm1AngleRad = 0;
+    }
+
+    private void resetArm2() {
+        arm2.setLocalRotation(new Quaternion());
+        arm2AngleRad = 0;
+    }
+
+    private void resetTurret() {
+        baseNode.setLocalRotation(new Quaternion());
+        turretAngleRad = 0;
+    }
+
+    /**
+     * Sets the angle of arm1 to the specified angle
+     * @param angle radians
+     */
+    private void setArm1Angle(double angle) {
+        resetArm1();
+        rotateArm1(angle);
+    }
+
+    /**
+     * Sets the angle of arm2 to the specified angle
+     * @param angle radians
+     */
+    private void setArm2Angle(double angle) {
+        resetArm2();
+        rotateArm2(angle);
+    }
+
+    /**
+     * Sets the angle of the turret to the specified angle
+     * @param angle radians
+     */
+    private void setTurretAngle(double angle) {
+        resetTurret();
+        rotateTurret(angle);
     }
 
     /**
@@ -218,10 +284,13 @@ public class Armvisualiser extends SimpleApplication {
         inputManager.addMapping("X-", new KeyTrigger(KeyInput.KEY_L));
         inputManager.addMapping("Y+", new KeyTrigger(KeyInput.KEY_COMMA));
         inputManager.addMapping("Y-", new KeyTrigger(KeyInput.KEY_PERIOD));
-        inputManager.addMapping("Z+", new KeyTrigger(KeyInput.KEY_U));
-        inputManager.addMapping("Z-", new KeyTrigger(KeyInput.KEY_O));
+        inputManager.addMapping("Turret+", new KeyTrigger(KeyInput.KEY_U));
+        inputManager.addMapping("Turret-", new KeyTrigger(KeyInput.KEY_O));
 
-        inputManager.addListener(analogListener, "X+", "X-", "Y+", "Y-", "Z+", "Z-");
+        inputManager.addMapping("Flip", new KeyTrigger(KeyInput.KEY_F));
+
+        inputManager.addListener(actionListener, "Flip");
+        inputManager.addListener(analogListener, "X+", "X-", "Y+", "Y-", "Turret+", "Turret-");
     }
 
     /**
@@ -239,12 +308,12 @@ public class Armvisualiser extends SimpleApplication {
 
         Vector3f clawLocation = clawGeom.getWorldTranslation(), targetLocation = targetPointGeom.getWorldTranslation();
 
-        double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(clawLocation.x, clawLocation.y, clawLocation.z, isFlipped);
+        double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(clawLocation.x, clawLocation.y, clawLocation.z, this.isFlipped);
 
         // Updates the text
         hudText.setText("VALUES:\nIKU (DEG): " + ikuValues[0] + ", " + ikuValues[1] + ", " + ikuValues[2]+ ", flipped: " + isFlipped
                 + "\nFKU (POS): " + fkuValues[0] + ", " + (42 + fkuValues[1]) + ", " + fkuValues[2]
-                + "\n\nREAL:\nANGLES (DEG): Arm1: " + angles[0] + ", Arm2: " + angles[1] + ", Turret: " + angles[2]
+                + "\n\nREAL:\nANGLES (DEG): Arm1: " + angles[0] + ", Arm2: " + angles[1] + ", Turret: " + angles[2] + ", flipped: " + this.isFlipped
                 + "\nPOSITION: " + clawLocation.x + ", " + clawLocation.y + ", " + clawLocation.z
                 + "\nTARGET: " + targetLocation.x + ", " + targetLocation.y + ", " + targetLocation.z
         );
@@ -256,14 +325,36 @@ public class Armvisualiser extends SimpleApplication {
      * @return [arm1AngleDeg, arm2AngleDeg, turretAngleDeg]
      */
     private double[] getAnglesDeg() {
-        var tempTurretAngDeg = baseNode.getLocalRotation().toAngles(null);
+        var tempTurretAngDeg = (float) turretAngleRad;// baseNode.getLocalRotation().toAngles(null);
 
 
         double arm1AngleDeg = Math.abs(arm1AngleRad * FastMath.RAD_TO_DEG) % 360; // Math.abs((tempArm1AngDeg[2] * FastMath.RAD_TO_DEG) % 360) % 180;
         double arm2AngleDeg = Math.abs(arm2AngleRad * FastMath.RAD_TO_DEG) % 360; // Math.abs(tempArm2AngDeg[2] * FastMath.RAD_TO_DEG);
-        double turretAngleDeg = (360 - tempTurretAngDeg[1] * FastMath.RAD_TO_DEG) % 360;
+        double turretAngleDeg = (360 - tempTurretAngDeg * FastMath.RAD_TO_DEG) % 360;
 
         return new double[]{arm1AngleDeg, arm2AngleDeg, turretAngleDeg};
+    }
+
+    private void renormalizeAngles() {
+        double arm1AngleDeg = arm1AngleRad * FastMath.RAD_TO_DEG;
+        double arm2AngleDeg = arm2AngleRad * FastMath.RAD_TO_DEG;
+        double turretAngleDeg = turretAngleRad * FastMath.RAD_TO_DEG;
+
+        arm1AngleDeg %= 360;
+        arm2AngleDeg %= 360;
+        turretAngleDeg %= 360;
+
+        if (arm1AngleDeg < 0) {
+            arm1AngleDeg += 360;
+        }
+
+        if (arm1AngleDeg > 180) {
+            arm1AngleDeg = 180 - arm1AngleDeg;
+        }
+
+        arm1AngleRad = arm1AngleDeg * FastMath.DEG_TO_RAD;
+        arm2AngleRad = arm2AngleDeg * FastMath.DEG_TO_RAD;
+        turretAngleRad = turretAngleDeg * FastMath.DEG_TO_RAD;
     }
 
     /**
@@ -276,32 +367,43 @@ public class Armvisualiser extends SimpleApplication {
             angles[0] = 360 - angles[0];
         }
         if (angles[1] > 180) {
-            angles[1] = 360 - angles[1];
+            angles[1] = (this.isFlipped ? 2 * angles[1] : 360) - angles[1];
         }
 
         //var clawLocation = clawGeom.getWorldTranslation();
-        double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(targetX, targetY, targetZ, false);
+        double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(targetX, targetY, 0, this.isFlipped);
 
-        float adjustArm1AngRad = (float) Math.toRadians(360 - (angles[0] - ikuValues[0]));
-        float adjustArm2AngRad = (float) Math.toRadians(angles[1] - ikuValues[1]);
-        float adjustTurretAngRad = (float) Math.toRadians(angles[2] - ikuValues[2]);
+        float adjustArm1AngRad, adjustArm2AngRad, adjustTurretAngRad;
 
-        baseNode.rotate(0, adjustTurretAngRad, 0);
-        rotateArm1(adjustArm1AngRad);
-        rotateArm2(adjustArm2AngRad);
+        if(!this.isFlipped) {
+            adjustArm1AngRad = (float) Math.toRadians(360 - (angles[0] - ikuValues[0]));
+            adjustArm2AngRad = (float) Math.toRadians(angles[1] - ikuValues[1]);
+        } else {
+            adjustArm1AngRad = (float) Math.toRadians((angles[0] - ikuValues[0]));
+            adjustArm2AngRad = (float) Math.toRadians((angles[1] - ikuValues[1]));
+        }
+
+        // System.out.println("TARGET ANGLES: " + ikuValues[0] + ", " + ikuValues[1]);
+
+        setArm1Angle((180f + ikuValues[0]) * FastMath.DEG_TO_RAD);
+        setArm2Angle((180f - ikuValues[1]) * FastMath.DEG_TO_RAD);
+
+        updateHUDText();
     }
 
     /**
      * Updates the target position and the arm angles to match.
      */
     private void updateTarget() {
-        targetPointGeom.center().move((float) targetX, (float) targetY, (float) targetZ);
+        targetPointGeom.center().move((float) MathUtil.rotatePoint(targetX, 0, turretAngleRad * FastMath.RAD_TO_DEG)[0], (float) targetY, (float) MathUtil.rotatePoint(targetX, 0, 360 - turretAngleRad * FastMath.RAD_TO_DEG)[1]);
         ikuUpdateAngles();
     }
 
     @Override
     public void simpleUpdate(float tpf) {
         //this method will be called every game tick and can be used to make updates
+        renormalizeAngles();
+        // System.out.println("REAL REAL: " + arm1AngleRad * FastMath.RAD_TO_DEG + ", " + arm2AngleRad * FastMath.RAD_TO_DEG + ", " + turretAngleRad * FastMath.RAD_TO_DEG);
     }
 
     @Override

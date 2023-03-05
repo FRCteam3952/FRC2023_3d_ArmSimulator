@@ -4,9 +4,28 @@ plugins {
     id "de.undercouch.download" version "5.1.0"
     id 'idea'
     id "io.github.0ffz.github-packages" version "1.2.1" // Plugin for anonymous inclusion of artifacts hosted in github package registry
+
+    id 'com.github.johnrengelman.shadow' version '7.1.2'
+    id "edu.wpi.first.GradleRIO" version "2023.4.2"
+    id "edu.wpi.first.WpilibTools" version "1.1.0"
 }
 
 description = 'Armvisualiser application'
+
+wpilibTools.deps.wpilibVersion = wpi.versions.wpilibVersion.get()
+
+def nativeConfigName = 'wpilibNatives'
+def nativeConfig = configurations.create(nativeConfigName)
+
+def nativeTasks = wpilibTools.createExtractionTasks {
+    configurationName = nativeConfigName
+}
+
+nativeTasks.addToSourceSetResources(sourceSets.main)
+nativeConfig.dependencies.add wpilibTools.deps.wpilib("wpimath")
+nativeConfig.dependencies.add wpilibTools.deps.wpilib("wpinet")
+nativeConfig.dependencies.add wpilibTools.deps.wpilib("wpiutil")
+nativeConfig.dependencies.add wpilibTools.deps.wpilib("ntcore")
 
 java {
     sourceCompatibility = '11'
@@ -15,7 +34,7 @@ java {
 
 ext.jmonkeyengineVersion = '3.5.2-stable'
 
-mainClassName = 'frc.team.Armvisualiser'
+mainClassName = 'frc.team3952.Armvisualiser'
 if (!hasProperty('mainClass')) {
     ext.mainClass = mainClassName
 }
@@ -42,6 +61,17 @@ dependencies {
     implementation 'wf.frk:jme-igui:0.1.2'
     implementation 'com.simsilica:lemur:1.16.0'
     implementation 'com.simsilica:lemur-proto:1.13.0'
+
+    implementation wpilibTools.deps.wpilibJava("wpiutil")
+    implementation wpilibTools.deps.wpilibJava("wpimath")
+    implementation wpilibTools.deps.wpilibJava("wpinet")
+    implementation wpilibTools.deps.wpilibJava("ntcore")
+
+    implementation group: "com.fasterxml.jackson.core", name: "jackson-annotations", version: wpi.versions.jacksonVersion.get()
+    implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: wpi.versions.jacksonVersion.get()
+    implementation group: "com.fasterxml.jackson.core", name: "jackson-databind", version: wpi.versions.jacksonVersion.get()
+
+    implementation group: "org.ejml", name: "ejml-simple", version: wpi.versions.ejmlVersion.get()
 }
 
 distZip {
@@ -55,8 +85,6 @@ distZip {
 
 //See https://api.adoptium.net/v3/assets/feature_releases/11/ga?image_type=jre for jre urls
 def windowsJreUrl = "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.15%2B10/OpenJDK11U-jre_x64_windows_hotspot_11.0.15_10.zip"
-
-
 
 task downloadWindowsJre(type: Download) {
     src windowsJreUrl
@@ -115,4 +143,15 @@ task fund(){
     doLast {
        java.awt.Desktop.desktop.browse "https://start.jmonkeyengine.org/#!funding=JME_DESKTOP,JME_NIFTY,16283%2Fjme-igui,LEMUR".toURI()
     }
+}
+
+shadowJar {
+    archiveBaseName = "Armvisualiser"
+    archiveVersion = ""
+    exclude("module-info.class")
+    archiveClassifier.set(wpilibTools.currentPlatform.platformName)
+}
+
+wrapper {
+    gradleVersion = '8.0.2'
 }

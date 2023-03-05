@@ -94,7 +94,7 @@ public final class MathUtil {
      *
      * @param x X coordinate
      * @param y Y coordinate
-     * @param angle Angle to rotate by
+     * @param angle Angle to rotate by, in deg
      */
     public static double[] rotatePoint(double x, double y, double angle) {
         double[] rotatedPoint = new double[2];

@@ -19,13 +19,15 @@ public final class ForwardKinematicsUtil {
      * @return the coordinates x, y, z
      */
     public static double[] getCoordinatesFromAngles(double a1, double a2, double turretAngle) {
-        double z = 0;
+        double extendedDist = ArmConstants.LIMB1_LENGTH * Math.sin(Math.toRadians(a1)) + ArmConstants.LIMB2_LENGTH * Math.sin(Math.toRadians(a2 - a1));
+        double z = Math.sin(Math.toRadians(turretAngle)) * extendedDist;
         double y = -ArmConstants.LIMB1_LENGTH * Math.cos(Math.toRadians(a1)) + ArmConstants.LIMB2_LENGTH * Math.cos(Math.toRadians(a2 - a1));
-        double x = ArmConstants.LIMB1_LENGTH * Math.sin(Math.toRadians(a1)) + ArmConstants.LIMB2_LENGTH * Math.sin(Math.toRadians(a2 - a1));
+        double x = Math.cos(Math.toRadians(turretAngle)) * extendedDist;
 
         // Rotate the coordinates by the turret angle
-        double[] rotated = MathUtil.rotatePoint(x, z, turretAngle);
+//        double[] rotated = MathUtil.rotatePoint(x, z, turretAngle);
 
-        return new double[]{rotated[0], y, rotated[1]};
+        // return new double[]{rotated[0], y, rotated[1]};
+        return new double[]{x, y, z};
     }
 }
