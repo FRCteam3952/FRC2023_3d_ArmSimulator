@@ -5,6 +5,7 @@
 /*.dll
 /*.dylib
 /*.so
+/*.j3o
 
 #Although most of the .idea directory should not be committed there is a legitimate purpose for committing run configurations
 /.idea/

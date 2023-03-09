@@ -1,6 +1,11 @@
 package frc.team3952;
 
+import com.jme3.app.DebugKeysAppState;
+import com.jme3.app.FlyCamAppState;
 import com.jme3.app.SimpleApplication;
+import com.jme3.app.StatsAppState;
+import com.jme3.app.state.ConstantVerifierState;
+import com.jme3.audio.AudioListenerState;
 import com.jme3.font.BitmapText;
 import com.jme3.input.KeyInput;
 import com.jme3.input.controls.ActionListener;
@@ -16,9 +21,15 @@ import com.jme3.renderer.RenderManager;
 import com.jme3.renderer.queue.RenderQueue;
 import com.jme3.scene.Geometry;
 import com.jme3.scene.Node;
+import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import com.jme3.shadow.DirectionalLightShadowRenderer;
 import com.jme3.system.AppSettings;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
+import edu.wpi.first.math.geometry.Rotation2d;
+
+import java.util.Scanner;
 
 /**
  * This is the Main Class of your Game. It should boot up your game and do initial initialisation
@@ -32,7 +43,7 @@ public class Armvisualiser extends SimpleApplication {
 
     // These need global scope for access in other locations.
     private Geometry clawGeom, targetPointGeom;
-    private Node baseNode, arm1, arm2;
+    private Node robotNode, posesNode, baseNode, arm1, arm2;
     private BitmapText hudText;
 
     /**
@@ -40,6 +51,8 @@ public class Armvisualiser extends SimpleApplication {
      */
     private double targetX = 9.0297d, targetY = 29.1975d;
     private boolean isFlipped = false;
+
+    private final Scanner scanner;
 
     private final ActionListener actionListener = (name, pressed, tpf) -> {
         if (pressed) {
@@ -58,6 +71,7 @@ public class Armvisualiser extends SimpleApplication {
      */
     private final AnalogListener analogListener = (name, value, tpf) -> {
         value *= 2;
+        double[] rotated;
         switch (name) {
             case "X+":
                 targetX += 0.2;
@@ -77,14 +91,67 @@ public class Armvisualiser extends SimpleApplication {
             case "Turret-":
                 rotateTurret(-value);
                 break;
+            case "Robot Forward":
+                rotated = MathUtil.rotatePoint(1, 0, robotNode.getLocalRotation().toAngles(null)[1]);
+                // robotNode.getLocalTranslation().addLocal((float) rotated[0], 0, (float) rotated[1]);
+                robotNode.move((float) rotated[0], 0, (float) rotated[1]);
+                System.out.println("FORWARD, " + rotated[0] + ", " + rotated[1]);
+                break;
+            case "Robot Backward":
+                rotated = MathUtil.rotatePoint(-1, 0, robotNode.getLocalRotation().toAngles(null)[1]);
+                // robotNode.getLocalTranslation().addLocal((float) rotated[0], 0, (float) rotated[1]);
+                robotNode.move((float) rotated[0], 0, (float) rotated[1]);
+                System.out.println("BACKWARD, " + rotated[0] + ", " + rotated[1]);
+                break;
+            case "Robot CCW":
+                robotNode.rotate(0, value * 1.5f, 0);
+                System.out.println("CCW");
+                break;
+            case "Robot CW":
+                robotNode.rotate(0, -value * 1.5f, 0);
+                System.out.println("CW");
+                break;
         }
         updateTarget();
     };
 
-    public static void main(String[] args) {
+    public Armvisualiser() {
+        super(new StatsAppState(), new FlyCamAppState(), new AudioListenerState(), new DebugKeysAppState(), new ConstantVerifierState());
+        this.scanner = new Scanner(System.in);
+        (new Thread(() -> {
+            while (true) {
+                String line = scanner.nextLine();
+                String[] splitLine = line.split(" ");
+                if(splitLine.length != 3 && splitLine.length != 6) {
+                    System.out.println("Invalid input");
+                    continue;
+                }
+                float[] pos = new float[splitLine.length];
+                for(int i = 0; i < pos.length; i++) {
+                    pos[i] = Float.parseFloat(splitLine[i]);
+                }
+                this.robotNode.setLocalTranslation(new Vector3f(pos[0], pos[1], pos[2]));
+                if(pos.length == 6) {
+                    this.robotNode.setLocalRotation(new Quaternion());
+                    this.robotNode.rotate(0, pos[5] * FastMath.DEG_TO_RAD, 0);
+                    // this.cam.setRotation(new Quaternion(pos[3] * FastMath.DEG_TO_RAD, pos[4] * FastMath.DEG_TO_RAD, pos[5] * FastMath.DEG_TO_RAD, 0));
+                    cam.update();
+                }
+            }
+        })).start();
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        Constants.FieldConstants.GamePiecePlacementLocationConstants.poke();
+        Thread.sleep(50);
         Armvisualiser app = new Armvisualiser(); // Instantiate the app
-        // app.showSettings = false; // This stops the settings screen from appearing. Only uncomment this line after you've set your initial settings once.
-        AppSettings settings = new AppSettings(false); // Loads the settings, making sure to load the previously used one. Makes the line above work
+        app.showSettings = false; // This stops the settings screen from appearing. Only uncomment this line after you've set your initial settings once.
+        AppSettings settings = new AppSettings(true); // Loads the settings, making sure to load the previously used one. Makes the line above work
+        settings.setResolution(1920, 1080);
+        settings.setFullscreen(true);
+        settings.setVSync(true);
+        settings.setGammaCorrection(false);
+        // settings.setUseInput(true);
         app.setSettings(settings);
         app.start(); // Starts the app. Runs simpleInitApp()
     }
@@ -153,6 +220,7 @@ public class Armvisualiser extends SimpleApplication {
      * Sets the angle of the turret to the specified angle
      * @param angle radians
      */
+    @SuppressWarnings("unused")
     private void setTurretAngle(double angle) {
         resetTurret();
         rotateTurret(angle);
@@ -163,12 +231,30 @@ public class Armvisualiser extends SimpleApplication {
      */
     @Override
     public void simpleInitApp() {
-        cam.getLocation().addLocal(0, 30, 100); // Move the camera up and back a bit, so you can see the entire structure immediately
+        cam.setLocation(new Vector3f(0, 20, 0));
         cam.update(); // Force update the camera so the previous command takes effect immediately
         flyCam.setMoveSpeed(100); // Lets you fly faster, since the geometry is quite large
 
+        Spatial field = assetManager.loadModel("Models/Field/field.gltf.j3o");
+        field.rotate(FastMath.HALF_PI, 0, 0); // long side is x, short is z (correct).
+        // 888.57 in by 427.85 in
+        final float fieldXModel = 888.57f;
+        final float fieldYModel = 427.85f;
+
+        final float xo10 = fieldXModel / 10f; // at 88.857, becomes ~710
+        final float yo10 = fieldYModel / 10f;
+        final float fieldScale = yo10 * 0.917f; // determined experimentially lel
+        field.scale(fieldScale);
+        field.center();
+        field.move((float) Constants.FieldConstants.FIELD_X_LENGTH / 2f - 0.1f, fieldScale, (float) Constants.FieldConstants.FIELD_Y_LENGTH / 2f - 21.6f);
+        Material mat_default = new Material( assetManager, "Common/MatDefs/Misc/ShowNormals.j3md");
+        field.setMaterial(mat_default);
+
         Box floor = new Box(1000, 0.1f, 1000); // The floor
         Geometry floorGeom = new Geometry("Floor", floor);
+
+        Box robot = new Box(35, 1, 30); // The robot
+        Geometry robotGeom = new Geometry("Box", robot);
 
         Box base = new Box(1, 1, 1); // This is the base of the arm
         Geometry baseGeom = new Geometry("Box", base);
@@ -177,7 +263,10 @@ public class Armvisualiser extends SimpleApplication {
         Geometry baseTowerGeom = new Geometry("Box", baseTower);
 
         // These nodes allow me to rotate things independently of each other around a known point, and to find the world-relative coordinates of parts.
+        robotNode = new Node("robotNode");
+        robotNode.move(0, fieldScale, 0);
         baseNode = new Node("baseNode");
+        posesNode = new Node("posesNode");
 
         arm1 = new Node("arm1");
         arm2 = new Node("arm2");
@@ -197,11 +286,15 @@ public class Armvisualiser extends SimpleApplication {
 
         // This attaches items into the node system (consider it a tree). The items are linked specifically so I can rotate parts like the arm limbs at the same time.
         rootNode.attachChild(floorGeom);
-        rootNode.attachChild(targetPointGeom);
-        rootNode.attachChild(baseNode);
+        robotNode.attachChild(targetPointGeom);
+        rootNode.attachChild(robotNode);
+        rootNode.attachChild(posesNode);
+        robotNode.attachChild(baseNode);
+        robotNode.attachChild(robotGeom);
         baseNode.attachChild(baseGeom);
         baseNode.attachChild(baseTowerGeom);
         baseNode.attachChild(arm1);
+        rootNode.attachChild(field);
 
         arm1.attachChild(arm2); // Attach arm2 node to arm1, so that when arm1 rotates, arm2 moves with it
         arm1.attachChild(limb1Geom);
@@ -227,20 +320,22 @@ public class Armvisualiser extends SimpleApplication {
 
         // Colors the limbs in different colors
         Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
-        Material mat2 = mat.clone(), mat3 = mat.clone(), mat4 = mat.clone(), mat5 = mat.clone(), mat6 = mat.clone(), mat7 = mat.clone(); // I was too lazy to keep initializing new materials
+        Material mat2 = mat.clone(), mat3 = mat.clone(), mat4 = mat.clone(), mat5 = mat.clone(), mat6 = mat.clone(), mat7 = mat.clone(), mat8 = mat.clone(); // I was too lazy to keep initializing new materials
         mat.setColor("Color", ColorRGBA.Blue);
-        mat2.setColor("Color", ColorRGBA.Red);
+        mat2.setColor("Color", ColorRGBA.Cyan);
         mat3.setColor("Color", ColorRGBA.Green);
         mat4.setColor("Color", ColorRGBA.Yellow);
         mat5.setColor("Color", ColorRGBA.Orange);
         mat6.setColor("Color", ColorRGBA.White);
         mat7.setColor("Color", ColorRGBA.Magenta);
+        mat8.setColor("Color", ColorRGBA.Red);
 
         DirectionalLight sun = new DirectionalLight(); // This is the light source for shadows
         sun.setDirection(new Vector3f(-0.5f, -0.5f, -0.5f).normalizeLocal()); // Positions the light source
         sun.setColor(ColorRGBA.White);
         rootNode.addLight(sun); // Puts the sun in the map
         rootNode.setShadowMode(RenderQueue.ShadowMode.CastAndReceive); // Make sure everything can cast a shadow and have a shadow casted on
+        posesNode.setShadowMode(RenderQueue.ShadowMode.Off);
 
         final int SHADOWMAP_SIZE = 4096; // Size of the shadow map
         DirectionalLightShadowRenderer dlsr = new DirectionalLightShadowRenderer(assetManager, SHADOWMAP_SIZE, 3); // Renders shadows
@@ -255,6 +350,7 @@ public class Armvisualiser extends SimpleApplication {
         clawGeom.setMaterial(mat5);
         floorGeom.setMaterial(mat6);
         targetPointGeom.setMaterial(mat7);
+        robotGeom.setMaterial(mat8);
 
         // Adds keybinds
         initKeys();
@@ -268,12 +364,37 @@ public class Armvisualiser extends SimpleApplication {
         hudText.setSize(guiFont.getCharSet().getRenderedSize());
         hudText.setColor(ColorRGBA.Black);
         hudText.setText("TEST");
-        hudText.setLocalTranslation(10, hudText.getLineHeight() * 10, 0);
+        hudText.setLocalTranslation(10, hudText.getLineHeight() * 15, 0);
         guiNode.attachChild(hudText);
 
         hudText.setQueueBucket(RenderQueue.Bucket.Gui); // Tells JME that this is text
 
-        updateHUDText(); // Initial update of the text
+        // Constants.FieldConstants.GamePiecePlacementLocationConstants.poke();
+        // updateHUDText(); // Initial update of the text
+        for(int i = 0; i < Constants.FieldConstants.GamePiecePlacementLocationConstants.POLE_POSITIONS.length; i++) {
+            for(int j = 0; j < Constants.FieldConstants.GamePiecePlacementLocationConstants.POLE_POSITIONS[i].length; j++) {
+                var pose = Constants.FieldConstants.GamePiecePlacementLocationConstants.POLE_POSITIONS[i][j];
+                if(pose == null) {
+                    System.out.print("bruh " + i + " " + j + " ");
+                    System.out.println(Constants.FieldConstants.GamePiecePlacementLocationConstants.POLE_POSITIONS[i][j] == null);
+                    continue;
+                }
+                renderPose3d(pose);
+                renderPose3d(MathUtil.mirrorPoseOnFieldForOppositeSide(pose));
+            }
+        }
+        for(int i = 0; i < Constants.FieldConstants.GamePiecePlacementLocationConstants.PLATFORM_POSITIONS.length; i++) {
+            for(int j = 0; j < Constants.FieldConstants.GamePiecePlacementLocationConstants.PLATFORM_POSITIONS[i].length; j++) {
+                var pose = Constants.FieldConstants.GamePiecePlacementLocationConstants.PLATFORM_POSITIONS[i][j];
+                if(pose == null) {
+                    System.out.print("bruh " + i + " " + j + " ");
+                    System.out.println(Constants.FieldConstants.GamePiecePlacementLocationConstants.PLATFORM_POSITIONS[i][j] == null);
+                    continue;
+                }
+                renderPose3d(pose);
+                renderPose3d(MathUtil.mirrorPoseOnFieldForOppositeSide(pose));
+            }
+        }
     }
 
     /**
@@ -289,8 +410,17 @@ public class Armvisualiser extends SimpleApplication {
 
         inputManager.addMapping("Flip", new KeyTrigger(KeyInput.KEY_F));
 
+        inputManager.addMapping("Robot Forward", new KeyTrigger(KeyInput.KEY_NUMPAD8));
+        inputManager.addMapping("Robot Backward", new KeyTrigger(KeyInput.KEY_NUMPAD2));
+        inputManager.addMapping("Robot CCW", new KeyTrigger(KeyInput.KEY_NUMPAD4));
+        inputManager.addMapping("Robot CW", new KeyTrigger(KeyInput.KEY_NUMPAD6));
+
         inputManager.addListener(actionListener, "Flip");
-        inputManager.addListener(analogListener, "X+", "X-", "Y+", "Y-", "Turret+", "Turret-");
+        inputManager.addListener(analogListener, "X+", "X-", "Y+", "Y-", "Turret+", "Turret-", "Robot Forward", "Robot Backward", "Robot CCW", "Robot CW");
+    }
+
+    private Pose2d getRobotPose() {
+        return new Pose2d(robotNode.getWorldTranslation().x, robotNode.getWorldTranslation().z, new Rotation2d(Math.toRadians(robotNode.getWorldRotation().getY())));
     }
 
     /**
@@ -306,16 +436,23 @@ public class Armvisualiser extends SimpleApplication {
 
         double[] fkuValues = ForwardKinematicsUtil.getCoordinatesFromAngles(angles[0], angles[1], angles[2]);
 
-        Vector3f clawLocation = clawGeom.getWorldTranslation(), targetLocation = targetPointGeom.getWorldTranslation();
+        Vector3f robotWorld = robotNode.getWorldTranslation();
+        Vector3f clawWorldLoc = clawGeom.getWorldTranslation();
+        Vector3f clawLocationRelative = clawWorldLoc.subtract(robotWorld), targetLocation = targetPointGeom.getWorldTranslation();
 
-        double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(clawLocation.x, clawLocation.y, clawLocation.z, this.isFlipped);
+        double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(clawLocationRelative.x, clawLocationRelative.y, clawLocationRelative.z, this.isFlipped);
+
+        Pose2d fieldPoseClaw = MathUtil.findFieldRelativePose(getRobotPose(), new Pose2d(clawLocationRelative.x, clawLocationRelative.z, new Rotation2d()));
 
         // Updates the text
         hudText.setText("VALUES:\nIKU (DEG): " + ikuValues[0] + ", " + ikuValues[1] + ", " + ikuValues[2]+ ", flipped: " + isFlipped
                 + "\nFKU (POS): " + fkuValues[0] + ", " + (42 + fkuValues[1]) + ", " + fkuValues[2]
                 + "\n\nREAL:\nANGLES (DEG): Arm1: " + angles[0] + ", Arm2: " + angles[1] + ", Turret: " + angles[2] + ", flipped: " + this.isFlipped
-                + "\nPOSITION: " + clawLocation.x + ", " + clawLocation.y + ", " + clawLocation.z
+                + "\nPOSITION: " + clawWorldLoc.x + ", " + clawWorldLoc.y + ", " + clawWorldLoc.z
                 + "\nTARGET: " + targetLocation.x + ", " + targetLocation.y + ", " + targetLocation.z
+                + "\nCAMERA COORDS" + cam.getLocation().x + ", " + cam.getLocation().y + ", " + cam.getLocation().z
+                + "\nRobot pose: " + getRobotPose()
+                + "\nFieldPoseClaw: " + fieldPoseClaw
         );
     }
 
@@ -373,22 +510,12 @@ public class Armvisualiser extends SimpleApplication {
         //var clawLocation = clawGeom.getWorldTranslation();
         double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(targetX, targetY, 0, this.isFlipped);
 
-        float adjustArm1AngRad, adjustArm2AngRad, adjustTurretAngRad;
-
-        if(!this.isFlipped) {
-            adjustArm1AngRad = (float) Math.toRadians(360 - (angles[0] - ikuValues[0]));
-            adjustArm2AngRad = (float) Math.toRadians(angles[1] - ikuValues[1]);
-        } else {
-            adjustArm1AngRad = (float) Math.toRadians((angles[0] - ikuValues[0]));
-            adjustArm2AngRad = (float) Math.toRadians((angles[1] - ikuValues[1]));
-        }
-
         // System.out.println("TARGET ANGLES: " + ikuValues[0] + ", " + ikuValues[1]);
 
         setArm1Angle((180f + ikuValues[0]) * FastMath.DEG_TO_RAD);
         setArm2Angle((180f - ikuValues[1]) * FastMath.DEG_TO_RAD);
 
-        updateHUDText();
+        // updateHUDText();
     }
 
     /**
@@ -399,10 +526,28 @@ public class Armvisualiser extends SimpleApplication {
         ikuUpdateAngles();
     }
 
+    /**
+     * Renders a Pose3d to the screen
+     * @param pose The pose
+     */
+    private void renderPose3d(Pose3d pose) {
+        Box box = new Box(0.5f, 0.5f, 0.5f);
+        Geometry geom = new Geometry("Box", box);
+        Material mat = new Material(assetManager, "Common/MatDefs/Misc/Unshaded.j3md");
+        mat.setColor("Color", ColorRGBA.Black);
+        geom.setMaterial(mat);
+
+        geom.setLocalTranslation((float) pose.getX(), (float) pose.getZ(), (float) pose.getY());
+        posesNode.attachChild(geom);
+    }
+
     @Override
     public void simpleUpdate(float tpf) {
         //this method will be called every game tick and can be used to make updates
         renormalizeAngles();
+        updateHUDText();
+
+
         // System.out.println("REAL REAL: " + arm1AngleRad * FastMath.RAD_TO_DEG + ", " + arm2AngleRad * FastMath.RAD_TO_DEG + ", " + turretAngleRad * FastMath.RAD_TO_DEG);
     }
 
