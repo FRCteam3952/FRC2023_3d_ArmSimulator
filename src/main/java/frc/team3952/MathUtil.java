@@ -169,4 +169,17 @@ public final class MathUtil {
         rotatedPoint[1] = x * Math.sin(Math.toRadians(angle)) + y * Math.cos(Math.toRadians(angle));
         return rotatedPoint;
     }
+
+    /**
+     * Converts polar coordinates to XY coordinates
+     * @param r Radius
+     * @param theta Angle, degrees
+     * @return [x, y]
+     */
+    public static double[] polarToXY(double r, double theta) {
+        double[] xy = new double[2];
+        xy[0] = r * Math.cos(Math.toRadians(theta));
+        xy[1] = r * Math.sin(Math.toRadians(theta));
+        return xy;
+    }
 }

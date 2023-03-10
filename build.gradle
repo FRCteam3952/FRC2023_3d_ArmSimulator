@@ -45,6 +45,10 @@ repositories {
     maven githubPackage.invoke("riccardobl/undefined")
     mavenCentral()
     mavenLocal()
+
+    maven {
+        url "https://frcmaven.wpi.edu/artifactory/release"
+    }
 }
 
 dependencies {
@@ -82,11 +86,10 @@ dependencies {
     implementation wpilibTools.deps.wpilibJava("wpinet")
     implementation wpilibTools.deps.wpilibJava("ntcore")
 
-    implementation group: "com.fasterxml.jackson.core", name: "jackson-annotations", version: wpi.versions.jacksonVersion.get()
-    implementation group: "com.fasterxml.jackson.core", name: "jackson-core", version: wpi.versions.jacksonVersion.get()
-    implementation group: "com.fasterxml.jackson.core", name: "jackson-databind", version: wpi.versions.jacksonVersion.get()
-
-    implementation group: "org.ejml", name: "ejml-simple", version: wpi.versions.ejmlVersion.get()
+    implementation "edu.wpi.first.ntcore:ntcore-jni:2023.4.2:windowsx86-64"
+    implementation "edu.wpi.first.wpimath:wpimath-jni:2023.4.2:windowsx86-64"
+    implementation "edu.wpi.first.wpinet:wpinet-jni:2023.4.2:windowsx86-64"
+    implementation "edu.wpi.first.wpiutil:wpiutil-jni:2023.4.2:windowsx86-64"
 }
 
 distZip {

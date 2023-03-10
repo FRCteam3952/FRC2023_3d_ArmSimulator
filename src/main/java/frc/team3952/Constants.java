@@ -310,8 +310,7 @@ public final class Constants {
                     Z_TOP_PLATFORM_HEIGHT, Z_MIDDLE_PLATFORM_HEIGHT, 0.0
             };
 
-            public static void poke() {
-                System.out.println("POKED");
+            static {
                 for(int i = 0; i < 3; i++) { // POLE
                     for(int j = 0; j < 6; j++) {
                         POLE_POSITIONS[i][j] = new Pose3d(X_COORDS[i], POLE_Y_COORDS[j], POLE_Z_COORDS[i], new Rotation3d());
@@ -323,6 +322,10 @@ public final class Constants {
                         PLATFORM_POSITIONS[i][j] = new Pose3d(X_COORDS[i], PLATFORM_Y_COORDS[j], PLATFORM_Z_COORDS[i], new Rotation3d());
                     }
                 }
+            }
+
+            public static void poke() {
+                System.out.println("POKED");
             }
         }
 
