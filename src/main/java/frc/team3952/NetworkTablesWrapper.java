@@ -83,7 +83,6 @@ public class NetworkTablesWrapper {
     }
 
     public static Pose2d getJetsonPose() {
-        // double[] defa = new double[] {Math.random() * Constants.FieldConstants.FIELD_X_LENGTH, 0, Math.random() * Constants.FieldConstants.FIELD_Y_LENGTH};// new double[] {0, 0, 0};
         double[] pose = getEntry("jetson", "apriltags_pose").getDoubleArray(new double[] {0, 0, 0});
         return new Pose2d(pose[0], pose[2], new Rotation2d());
     }
@@ -91,5 +90,13 @@ public class NetworkTablesWrapper {
     public static Pose2d getRobotPose() {
         double[] pose = getEntry("robot", "drive_odometry").getDoubleArray(new double[] {0, 0, 0});
         return new Pose2d(pose[0], pose[1], new Rotation2d(pose[2]));
+    }
+
+    public static double[] getArmAngles() {
+        return getEntry("robot", "arm_angles").getDoubleArray(new double[] {0, 0, 0});
+    }
+
+    public static double[] getArmTargetCoordinates() {
+        return getEntry("robot", "arm_target_coords").getDoubleArray(new double[] {0, 0, 0});
     }
 }

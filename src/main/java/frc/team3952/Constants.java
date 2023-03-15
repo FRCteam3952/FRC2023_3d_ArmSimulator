@@ -25,9 +25,9 @@ public final class Constants {
     public static class ArmConstants {
 
         // All constants are in inches
-        public static final double ORIGIN_HEIGHT = 42d;
-        public static final double LIMB1_LENGTH = 32.5;
-        public static final double LIMB2_LENGTH = 29d;
+        public static final double ORIGIN_HEIGHT = 49.5d;
+        public static final double LIMB1_LENGTH = 28.5;
+        public static final double LIMB2_LENGTH = 31.5d;
 
         public static final double ANGLE_DELTA = 5.0;
         public static final double MAX_REACH_REDUCTION = 0; // change to be correct later
@@ -46,24 +46,9 @@ public final class Constants {
 
         public static final double ARM_1_INITIAL_ANGLE = 10.0;
         public static final double ARM_2_INITIAL_ANGLE = 20.0;
-        public static final double MAX_OUTPUT = 0.4;
-        public static final double MIN_OUTPUT = -0.4;
-        public static final double SPEED_DEC_ON_UNFLIP = 0.2;
-        public static final double SPEED_DEC_ON_FLIP = 1.0;
-        public static final double COMPLEMENTING_FLIP_SPEED = 1.2;
         public static final double[] STARTING_COORDS = ForwardKinematicsUtil.getCoordinatesFromAngles(ARM_1_INITIAL_ANGLE, ARM_2_INITIAL_ANGLE, 0);
         public static final double[] FLIP_COORDS_WHEN_FLIPPING = {31.0, 17.0, 0.0};
         public static final double[] FLIPPING_TARGET_ANGLES = InverseKinematicsUtil.getAnglesFromCoordinates(FLIP_COORDS_WHEN_FLIPPING[0], FLIP_COORDS_WHEN_FLIPPING[1], FLIP_COORDS_WHEN_FLIPPING[2], true);
-    }
-
-    /**
-     * Constants for the Claw
-     */
-    public static class ClawConstants {
-        public static final double CLAW_ROTATE_SPEED = 0.1;
-        public static final double ANGLE_DELTA = 2;
-        public static final double MIN_ROTATION_ENCODER_VALUE = 0; // change to what it actually is
-        public static final double MAX_ROTATION_ENCODER_VALUE = 3; // change to what it actually is
     }
 
     /**
@@ -98,27 +83,6 @@ public final class Constants {
             // Xbox Controller (2)
 
         }
-    }
-
-    /**
-     * Constants relating to ports on the robot (which port things are plugged into)
-     */
-    public static class PortConstants {
-        public static final int FRONT_RIGHT_MOTOR_PORT = 1;
-        public static final int REAR_RIGHT_MOTOR_PORT = 3;
-        public static final int REAR_LEFT_MOTOR_PORT = 4;
-        public static final int FRONT_LEFT_MOTOR_PORT = 2;
-
-        public static final int PIVOT1_PORT = 9;
-        public static final int PIVOT2_PORT = 10;
-        public static final int TURRET_PORT = 8;
-
-        public static final int CLAW_GRIP_PORT = 7;
-        public static final int CLAW_ROTATE_PORT = 11;
-
-        public static final int PIVOT_1_LIMIT_PORT = 1;
-        public static final int PIVOT_2_LIMIT_PORT = 0;
-        public static final int CLAW_LIMIT_SWITCH_PORT = 2; // change to whatever it is
     }
 
     /**
