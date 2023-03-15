@@ -21,12 +21,11 @@ public final class InverseKinematicsUtil {
     public static double[] getAnglesFromCoordinates(double x, double y, double z, boolean flipped) {
 
         double pivot1Angle, pivot2Angle, turretAngle;
-        double adjusted_y = y - ArmConstants.ORIGIN_HEIGHT;
-        double adjusted_x = x;
 
-        if(MathUtil.distance(x, 0, z, 0) < ArmConstants.MIN_HOR_DISTANCE){
-            return new double[]{Double.NaN, Double.NaN, Double.NaN};
-        }
+        y = Math.min(y, ArmConstants.MAX_HEIGHT); //cap arm height at MAX_HEIGHT inches above the ground
+
+        double adjusted_y = y - ArmConstants.ORIGIN_HEIGHT;
+        double adjusted_x = Math.abs(x);
 
         // Turret angle calculations
         double angleCalc = Math.toDegrees(Math.atan2(z, x));

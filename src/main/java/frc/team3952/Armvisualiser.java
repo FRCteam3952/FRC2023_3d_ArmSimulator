@@ -52,7 +52,7 @@ public class Armvisualiser extends SimpleApplication {
     /**
      * The target position of the claw. Initialized to the claw's starting position.
      */
-    private double targetX, targetY;
+    private double targetX, targetY, targetZ;
     private boolean isFlipped = false;
 
     private final Scanner scanner;
@@ -91,10 +91,12 @@ public class Armvisualiser extends SimpleApplication {
                 targetY -= 0.2;
                 break;
             case "Turret+":
-                rotateTurret(value);
+                // rotateTurret(value);
+                targetZ += 0.2;
                 break;
             case "Turret-":
-                rotateTurret(-value);
+                // rotateTurret(-value);
+                targetZ -= 0.2;
                 break;
             case "Robot Forward":
                 rotated = MathUtil.polarToXY(1, robotNode.getLocalRotation().toAngles(null)[1] * FastMath.RAD_TO_DEG + 180);
@@ -412,8 +414,8 @@ public class Armvisualiser extends SimpleApplication {
      * This method initializes the keybinds.
      */
     private void initKeys() {
-        inputManager.addMapping("X+", new KeyTrigger(KeyInput.KEY_J));
-        inputManager.addMapping("X-", new KeyTrigger(KeyInput.KEY_L));
+        inputManager.addMapping("X+", new KeyTrigger(KeyInput.KEY_L));
+        inputManager.addMapping("X-", new KeyTrigger(KeyInput.KEY_J));
         inputManager.addMapping("Y+", new KeyTrigger(KeyInput.KEY_COMMA));
         inputManager.addMapping("Y-", new KeyTrigger(KeyInput.KEY_PERIOD));
         inputManager.addMapping("Turret+", new KeyTrigger(KeyInput.KEY_U));
@@ -445,7 +447,7 @@ public class Armvisualiser extends SimpleApplication {
             angles[0] = 360 - angles[0];
         }
 
-        double[] fkuValues = ForwardKinematicsUtil.getCoordinatesFromAngles(angles[0], angles[1], 0);
+        double[] fkuValues = ForwardKinematicsUtil.getCoordinatesFromAngles(angles[0], angles[1], angles[2]);
 
         Vector3f robotWorld = robotNode.getWorldTranslation();
         Vector3f clawWorldLoc = clawGeom.getWorldTranslation();
@@ -491,12 +493,13 @@ public class Armvisualiser extends SimpleApplication {
      * This method updates the angles of the arm components using IKU to position the claw at the target position.
      */
     private void ikuUpdateAngles() {//var clawLocation = clawGeom.getWorldTranslation();
-        double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(targetX, targetY, 0, this.isFlipped);
+        double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(targetX, targetY, targetZ, this.isFlipped);
 
         // System.out.println("TARGET ANGLES: " + ikuValues[0] + ", " + ikuValues[1]);
 
         setArm1Angle((180f + ikuValues[0]) * FastMath.DEG_TO_RAD);
         setArm2Angle((180f - ikuValues[1]) * FastMath.DEG_TO_RAD);
+        setTurretAngle(-ikuValues[2] * FastMath.DEG_TO_RAD);
 
         // updateHUDText();
     }
@@ -505,7 +508,7 @@ public class Armvisualiser extends SimpleApplication {
      * Updates the target position and the arm angles to match.
      */
     private void updateTarget() {
-        targetPointGeom.center().move((float) MathUtil.rotatePoint(targetX, 0, turretAngleRad * FastMath.RAD_TO_DEG)[0], (float) targetY, (float) MathUtil.rotatePoint(targetX, 0, 360 - turretAngleRad * FastMath.RAD_TO_DEG)[1]);
+        targetPointGeom.center().move((float) targetX, (float) targetY, (float) targetZ);
         ikuUpdateAngles();
     }
 
