@@ -47,6 +47,10 @@ public class Armvisualiser extends SimpleApplication {
     private Geometry clawGeom, targetPointGeom;
     private Node robotNode, posesNode, baseNode, arm1, arm2;
     private BitmapText hudText;
+
+    /**
+     * Used so that we can use the library's optimizations for the pose boxes by giving them the same material.
+     */
     private Material poseMat;
 
     /**
@@ -57,7 +61,8 @@ public class Armvisualiser extends SimpleApplication {
 
     private final Scanner scanner;
 
-    private final ActionListener actionListener = (name, pressed, tpf) -> {
+    // Keybind handlers
+    private final ActionListener actionListener = (name, pressed, tpf) -> { // When you press it, don't keep flipping while it's pressed, only flip once (equiv. to getRawButtonPressed)
         if (pressed) {
             return;
         }
@@ -71,10 +76,7 @@ public class Armvisualiser extends SimpleApplication {
         }
     };
 
-    /**
-     * This handles keybinds to make changes appear on the model.
-     */
-    private final AnalogListener analogListener = (name, value, tpf) -> {
+    private final AnalogListener analogListener = (name, value, tpf) -> { // Keep going while pressed (equiv. to getRawButton)
         value *= 2;
         double[] rotated;
         switch (name) {
@@ -91,30 +93,24 @@ public class Armvisualiser extends SimpleApplication {
                 targetY -= 0.2;
                 break;
             case "Turret+":
-                // rotateTurret(value);
                 targetZ += 0.2;
                 break;
             case "Turret-":
-                // rotateTurret(-value);
                 targetZ -= 0.2;
                 break;
             case "Robot Forward":
                 rotated = MathUtil.polarToXY(1, robotNode.getLocalRotation().toAngles(null)[1] * FastMath.RAD_TO_DEG + 180);
                 robotNode.move(-(float) rotated[0], 0, (float) rotated[1]);
-                // System.out.println("FORWARD, " + rotated[0] + ", " + rotated[1]);
                 break;
             case "Robot Backward":
                 rotated = MathUtil.polarToXY(-1, robotNode.getLocalRotation().toAngles(null)[1] * FastMath.RAD_TO_DEG + 180);
                 robotNode.move(-(float) rotated[0], 0, (float) rotated[1]);
-                // System.out.println("BACKWARD, " + rotated[0] + ", " + rotated[1]);
                 break;
             case "Robot CCW":
                 robotNode.rotate(0, value * 1.5f, 0);
-                // System.out.println("CCW");
                 break;
             case "Robot CW":
                 robotNode.rotate(0, -value * 1.5f, 0);
-                // System.out.println("CW");
                 break;
         }
         updateTarget();
@@ -125,10 +121,9 @@ public class Armvisualiser extends SimpleApplication {
         double[] initialPos = ForwardKinematicsUtil.getCoordinatesFromAngles(Constants.ArmConstants.ARM_1_INITIAL_ANGLE, Constants.ArmConstants.ARM_2_INITIAL_ANGLE, 0);
         targetX = initialPos[0];
         targetY = initialPos[1];
-        System.out.println("tx: " + targetX + ", ty: " + targetY);
 
         this.scanner = new Scanner(System.in);
-        (new Thread(() -> {
+        (new Thread(() -> { // Allow user input to conosle to control the GUI
             while (true) {
                 String line = scanner.nextLine();
                 String[] splitLine = line.split(" ");
@@ -144,7 +139,6 @@ public class Armvisualiser extends SimpleApplication {
                 if(pos.length == 6) {
                     this.robotNode.setLocalRotation(new Quaternion());
                     this.robotNode.rotate(0, pos[5] * FastMath.DEG_TO_RAD, 0);
-                    // this.cam.setRotation(new Quaternion(pos[3] * FastMath.DEG_TO_RAD, pos[4] * FastMath.DEG_TO_RAD, pos[5] * FastMath.DEG_TO_RAD, 0));
                     cam.update();
                 }
             }
@@ -161,7 +155,7 @@ public class Armvisualiser extends SimpleApplication {
         settings.setFullscreen(false);
         settings.setVSync(false);
         settings.setGammaCorrection(false);
-        settings.setRenderer(AppSettings.LWJGL_OPENGL33);
+        settings.setRenderer(AppSettings.LWJGL_OPENGL33); // not sure why i decided to do this, you can probably remove it if you want
         settings.setTitle("Arm Visualiser");
         // settings.setUseInput(true);
         app.setSettings(settings);
@@ -307,8 +301,6 @@ public class Armvisualiser extends SimpleApplication {
         Box targetPoint = new Box(1f, 1f, 1f); // The target point
         targetPointGeom = new Geometry("Box", targetPoint);
 
-        GeometryBatchFactory.optimize(posesNode); // Since this never changes, we can optimize this and merge everything together into one mesh and save a bit of performance.
-
         // This attaches items into the node system (consider it a tree). The items are linked specifically so I can rotate parts like the arm limbs at the same time.
         rootNode.attachChild(floorGeom);
         robotNode.attachChild(targetPointGeom);
@@ -351,7 +343,7 @@ public class Armvisualiser extends SimpleApplication {
         mat3.setColor("Color", ColorRGBA.Green);
         mat4.setColor("Color", ColorRGBA.Yellow);
         mat5.setColor("Color", ColorRGBA.Orange);
-        mat6.setColor("Color", ColorRGBA.White);
+        mat6.setColor("Color", ColorRGBA.Gray);
         mat7.setColor("Color", ColorRGBA.Magenta);
         mat8.setColor("Color", ColorRGBA.Red);
 
@@ -359,10 +351,11 @@ public class Armvisualiser extends SimpleApplication {
         sun.setDirection(new Vector3f(-0.5f, -0.5f, -0.5f).normalizeLocal()); // Positions the light source
         sun.setColor(ColorRGBA.White);
         rootNode.addLight(sun); // Puts the sun in the map
-        rootNode.setShadowMode(RenderQueue.ShadowMode.CastAndReceive); // Make sure everything can cast a shadow and have a shadow casted on
+        rootNode.setShadowMode(RenderQueue.ShadowMode.Receive); // Make sure everything can have a shadow casted on, but cannot cast a shadow because that will kill fps
+        baseNode.setShadowMode(RenderQueue.ShadowMode.CastAndReceive);
         posesNode.setShadowMode(RenderQueue.ShadowMode.Off);
 
-        final int SHADOWMAP_SIZE = 3072; // Size of the shadow map
+        final int SHADOWMAP_SIZE = 128; // Size of the shadow map
         DirectionalLightShadowRenderer dlsr = new DirectionalLightShadowRenderer(assetManager, SHADOWMAP_SIZE, 1); // Renders shadows
         dlsr.setLight(sun);
         viewPort.addProcessor(dlsr); // Adds the shadow renderer to the viewport
@@ -387,7 +380,7 @@ public class Armvisualiser extends SimpleApplication {
         // Adds the IKU, FKU, and real value text
         hudText = new BitmapText(guiFont);
         hudText.setSize(guiFont.getCharSet().getRenderedSize());
-        hudText.setColor(ColorRGBA.Black);
+        hudText.setColor(ColorRGBA.White);
         hudText.setText("TEST");
         hudText.setLocalTranslation(10, hudText.getLineHeight() * 15, 0);
         guiNode.attachChild(hudText);
@@ -408,6 +401,8 @@ public class Armvisualiser extends SimpleApplication {
                 renderPose3d(MathUtil.mirrorPoseOnFieldForOppositeSide(pose));
             }
         }
+
+        GeometryBatchFactory.optimize(posesNode); // Since this never changes, we can optimize this and merge everything together into one mesh and save a bit of performance.
     }
 
     /**
@@ -442,7 +437,7 @@ public class Armvisualiser extends SimpleApplication {
     private void updateHUDText() {
         double[] angles = getAnglesDeg();
 
-        boolean isFlipped = angles[1] > 180;
+        boolean simIsFlipped = angles[1] > 180;
         if (angles[0] > 180) {
             angles[0] = 360 - angles[0];
         }
@@ -459,15 +454,16 @@ public class Armvisualiser extends SimpleApplication {
 
         Pose2d fieldPoseClaw = MathUtil.findFieldRelativePose(getRobotPose(), new Pose2d(clawLocationRelative.x, clawLocationRelative.z, new Rotation2d()));
 
+
         // Updates the text
-        hudText.setText("VALUES:\nIKU (DEG): " + ikuValues[0] + ", " + ikuValues[1] + ", " + ikuValues[2] + ", flipped: " + isFlipped
-                + "\nFKU (POS): " + fkuValues[0] + ", " + fkuValues[1] + ", " + fkuValues[2]
-                + "\n\nREAL:\nANGLES (DEG): Arm1: " + angles[0] + ", Arm2: " + angles[1] + ", Turret: " + angles[2] + ", flipped: " + this.isFlipped
-                + "\nPOSITION: " + clawWorldLoc.x + ", " + clawWorldLoc.y + ", " + clawWorldLoc.z
-                + "\nCLAW RELATIVE: " + clawLocationRelative.x + ", " + clawLocationRelative.y + ", " + clawLocationRelative.z
-                + "\nCLAW RELATIVE ROBOT ROTATED: " + robotRelativeClawReal[0] + ", " + clawLocationRelative.y + ", " + robotRelativeClawReal[1]
-                + "\nTARGET: " + targetLocation.x + ", " + targetLocation.y + ", " + targetLocation.z
-                + "\nCAMERA COORDS: " + cam.getLocation().x + ", " + cam.getLocation().y + ", " + cam.getLocation().z
+        hudText.setText("VALUES:\nIKU (DEG): " + String.format("%.2f, %.2f, %.2f, flipped: %b", ikuValues[0], ikuValues[1], ikuValues[2], simIsFlipped) // ikuValues[0] + ", " + ikuValues[1] + ", " + ikuValues[2] + ", flipped: " + simIsFlipped
+                + "\nFKU (POS): " + String.format("%.2f, %.2f, %.2f", fkuValues[0], fkuValues[1], fkuValues[2]) // fkuValues[0] + ", " + fkuValues[1] + ", " + fkuValues[2]
+                + "\n\nREAL:\nANGLES (DEG): " + String.format("%.2f, %.2f, %.2f, flipped: %b", angles[0], angles[1], angles[2], this.isFlipped) // + "Arm1: " + angles[0] + ", Arm2: " + angles[1] + ", Turret: " + angles[2] + ", flipped: " + this.isFlipped
+                + "\nPOSITION: " + String.format("%.2f, %.2f, %.2f", clawWorldLoc.x, clawWorldLoc.y, clawWorldLoc.z) // + clawWorldLoc.x + ", " + clawWorldLoc.y + ", " + clawWorldLoc.z
+                // + "\nCLAW RELATIVE: " + clawLocationRelative.x + ", " + clawLocationRelative.y + ", " + clawLocationRelative.z
+                + "\nCLAW RELATIVE ROBOT ROTATED: " + String.format("%.2f, %.2f, %.2f", robotRelativeClawReal[0], clawLocationRelative.y, robotRelativeClawReal[1]) // + robotRelativeClawReal[0] + ", " + clawLocationRelative.y + ", " + robotRelativeClawReal[1]
+                + "\nTARGET: " + String.format("%.2f, %.2f, %.2f", targetLocation.x, targetLocation.y, targetLocation.z) // + targetLocation.x + ", " + targetLocation.y + ", " + targetLocation.z
+                // + "\nCAMERA COORDS: " + cam.getLocation().x + ", " + cam.getLocation().y + ", " + cam.getLocation().z
                 + "\nRobot pose: " + getRobotPose()
                 + "\nFieldPoseClaw: " + fieldPoseClaw
         );
@@ -492,7 +488,7 @@ public class Armvisualiser extends SimpleApplication {
     /**
      * This method updates the angles of the arm components using IKU to position the claw at the target position.
      */
-    private void ikuUpdateAngles() {//var clawLocation = clawGeom.getWorldTranslation();
+    private void ikuUpdateAngles() {
         double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(targetX, targetY, targetZ, this.isFlipped);
 
         // System.out.println("TARGET ANGLES: " + ikuValues[0] + ", " + ikuValues[1]);
