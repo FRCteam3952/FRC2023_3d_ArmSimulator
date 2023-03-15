@@ -149,8 +149,7 @@ public class Armvisualiser extends SimpleApplication {
         })).start();
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException {
-        Constants.FieldConstants.GamePiecePlacementLocationConstants.poke();
+    public static void main(String[] args) throws InterruptedException, IOException {Constants.FieldConstants.GamePiecePlacementLocationConstants.poke();
         NetworkTablesWrapper.init();
         Thread.sleep(50);
         Armvisualiser app = new Armvisualiser(); // Instantiate the app
@@ -191,6 +190,11 @@ public class Armvisualiser extends SimpleApplication {
      */
     private void rotateTurret(double angle) {
         turretAngleRad += angle;
+        if(turretAngleRad > Math.PI) {
+            turretAngleRad -= Math.PI * 2;
+        } else if(turretAngleRad < -Math.PI) {
+            turretAngleRad += Math.PI * 2;
+        }
         baseNode.rotate(0, (float) angle, 0);
     }
 
@@ -231,7 +235,6 @@ public class Armvisualiser extends SimpleApplication {
      * Sets the angle of the turret to the specified angle
      * @param angle radians
      */
-    @SuppressWarnings("unused")
     private void setTurretAngle(double angle) {
         resetTurret();
         rotateTurret(angle);
@@ -455,7 +458,7 @@ public class Armvisualiser extends SimpleApplication {
         Pose2d fieldPoseClaw = MathUtil.findFieldRelativePose(getRobotPose(), new Pose2d(clawLocationRelative.x, clawLocationRelative.z, new Rotation2d()));
 
         // Updates the text
-        hudText.setText("VALUES:\nIKU (DEG): " + ikuValues[0] + ", " + ikuValues[1] + ", " + ikuValues[2]+ ", flipped: " + isFlipped
+        hudText.setText("VALUES:\nIKU (DEG): " + ikuValues[0] + ", " + ikuValues[1] + ", " + ikuValues[2] + ", flipped: " + isFlipped
                 + "\nFKU (POS): " + fkuValues[0] + ", " + fkuValues[1] + ", " + fkuValues[2]
                 + "\n\nREAL:\nANGLES (DEG): Arm1: " + angles[0] + ", Arm2: " + angles[1] + ", Turret: " + angles[2] + ", flipped: " + this.isFlipped
                 + "\nPOSITION: " + clawWorldLoc.x + ", " + clawWorldLoc.y + ", " + clawWorldLoc.z
@@ -479,7 +482,7 @@ public class Armvisualiser extends SimpleApplication {
 
         double arm1AngleDeg = Math.abs(180 - (Math.abs(arm1AngleRad * FastMath.RAD_TO_DEG) % 360)); // Math.abs((tempArm1AngDeg[2] * FastMath.RAD_TO_DEG) % 360) % 180;
         double arm2AngleDeg = 180 - (Math.abs(arm2AngleRad * FastMath.RAD_TO_DEG) % 360); // Math.abs(tempArm2AngDeg[2] * FastMath.RAD_TO_DEG);
-        double turretAngleDeg = (360 - tempTurretAngDeg * FastMath.RAD_TO_DEG) % 360;
+        double turretAngleDeg = (-tempTurretAngDeg * FastMath.RAD_TO_DEG) % 360;
 
         return new double[]{arm1AngleDeg, arm2AngleDeg, turretAngleDeg};
     }

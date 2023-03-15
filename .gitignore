@@ -6,9 +6,12 @@
 /*.dylib
 /*.so
 *.j3o
+/bin/
 
 #Although most of the .idea directory should not be committed there is a legitimate purpose for committing run configurations
 /.idea/
 !/.idea/runConfigurations/
+#it has the java args so you can run in idea
+!/.idea/workspace.xml
 
 local.properties
