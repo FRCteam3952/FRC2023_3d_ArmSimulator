@@ -360,8 +360,8 @@ public class Armvisualiser extends SimpleApplication {
         rootNode.setShadowMode(RenderQueue.ShadowMode.CastAndReceive); // Make sure everything can cast a shadow and have a shadow casted on
         posesNode.setShadowMode(RenderQueue.ShadowMode.Off);
 
-        final int SHADOWMAP_SIZE = 4096; // Size of the shadow map
-        DirectionalLightShadowRenderer dlsr = new DirectionalLightShadowRenderer(assetManager, SHADOWMAP_SIZE, 3); // Renders shadows
+        final int SHADOWMAP_SIZE = 3072; // Size of the shadow map
+        DirectionalLightShadowRenderer dlsr = new DirectionalLightShadowRenderer(assetManager, SHADOWMAP_SIZE, 1); // Renders shadows
         dlsr.setLight(sun);
         viewPort.addProcessor(dlsr); // Adds the shadow renderer to the viewport
 
@@ -487,42 +487,10 @@ public class Armvisualiser extends SimpleApplication {
         return new double[]{arm1AngleDeg, arm2AngleDeg, turretAngleDeg};
     }
 
-    private void renormalizeAngles() {
-        double arm1AngleDeg = arm1AngleRad * FastMath.RAD_TO_DEG;
-        double arm2AngleDeg = arm2AngleRad * FastMath.RAD_TO_DEG;
-        double turretAngleDeg = turretAngleRad * FastMath.RAD_TO_DEG;
-
-        arm1AngleDeg %= 360;
-        arm2AngleDeg %= 360;
-        turretAngleDeg %= 360;
-
-        if (arm1AngleDeg < 0) {
-            // arm1AngleDeg += 360;
-        }
-
-        if (arm1AngleDeg > 180) {
-            // arm1AngleDeg = 180 - arm1AngleDeg;
-        }
-
-        arm1AngleRad = arm1AngleDeg * FastMath.DEG_TO_RAD;
-        arm2AngleRad = arm2AngleDeg * FastMath.DEG_TO_RAD;
-        turretAngleRad = turretAngleDeg * FastMath.DEG_TO_RAD;
-    }
-
     /**
      * This method updates the angles of the arm components using IKU to position the claw at the target position.
      */
-    private void ikuUpdateAngles() {
-        double[] angles = getAnglesDeg();
-
-        if (angles[0] > 180) {
-            // angles[0] = 360 - angles[0];
-        }
-        if (angles[1] > 180) {
-            // angles[1] = (this.isFlipped ? 2 * angles[1] : 360) - angles[1];
-        }
-
-        //var clawLocation = clawGeom.getWorldTranslation();
+    private void ikuUpdateAngles() {//var clawLocation = clawGeom.getWorldTranslation();
         double[] ikuValues = InverseKinematicsUtil.getAnglesFromCoordinates(targetX, targetY, 0, this.isFlipped);
 
         // System.out.println("TARGET ANGLES: " + ikuValues[0] + ", " + ikuValues[1]);
@@ -558,7 +526,6 @@ public class Armvisualiser extends SimpleApplication {
     @Override
     public void simpleUpdate(float tpf) {
         //this method will be called every game tick and can be used to make updates
-        // renormalizeAngles();
         Pose2d pos = NetworkTablesWrapper.getRobotPose();
         if(!(pos.getX() == 0 && pos.getY() == 0)) {
             this.robotNode.setLocalTranslation(new Vector3f((float) pos.getX(), this.robotNode.getLocalTranslation().y, (float) pos.getY()));
