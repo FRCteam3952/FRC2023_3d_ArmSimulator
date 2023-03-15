@@ -157,7 +157,6 @@ public class Armvisualiser extends SimpleApplication {
         settings.setGammaCorrection(false);
         settings.setRenderer(AppSettings.LWJGL_OPENGL33); // not sure why i decided to do this, you can probably remove it if you want
         settings.setTitle("Arm Visualiser");
-        // settings.setUseInput(true);
         app.setSettings(settings);
         app.start(); // Starts the app. Runs simpleInitApp()
     }
@@ -456,13 +455,14 @@ public class Armvisualiser extends SimpleApplication {
 
 
         // Updates the text
-        hudText.setText("VALUES:\nIKU (DEG): " + String.format("%.2f, %.2f, %.2f, flipped: %b", ikuValues[0], ikuValues[1], ikuValues[2], simIsFlipped) // ikuValues[0] + ", " + ikuValues[1] + ", " + ikuValues[2] + ", flipped: " + simIsFlipped
-                + "\nFKU (POS): " + String.format("%.2f, %.2f, %.2f", fkuValues[0], fkuValues[1], fkuValues[2]) // fkuValues[0] + ", " + fkuValues[1] + ", " + fkuValues[2]
-                + "\n\nREAL:\nANGLES (DEG): " + String.format("%.2f, %.2f, %.2f, flipped: %b", angles[0], angles[1], angles[2], this.isFlipped) // + "Arm1: " + angles[0] + ", Arm2: " + angles[1] + ", Turret: " + angles[2] + ", flipped: " + this.isFlipped
-                + "\nPOSITION: " + String.format("%.2f, %.2f, %.2f", clawWorldLoc.x, clawWorldLoc.y, clawWorldLoc.z) // + clawWorldLoc.x + ", " + clawWorldLoc.y + ", " + clawWorldLoc.z
+        // Also, turns out rendering less text makes your game a bit faster who woulda known (rounding)
+        hudText.setText("VALUES:\nIKU (DEG): " + String.format("%.2f, %.2f, %.2f, flipped: %b", ikuValues[0], ikuValues[1], ikuValues[2], simIsFlipped)
+                + "\nFKU (POS): " + String.format("%.2f, %.2f, %.2f", fkuValues[0], fkuValues[1], fkuValues[2])
+                + "\n\nREAL:\nANGLES (DEG): " + String.format("%.2f, %.2f, %.2f, flipped: %b", angles[0], angles[1], angles[2], this.isFlipped)
+                + "\nPOSITION: " + String.format("%.2f, %.2f, %.2f", clawWorldLoc.x, clawWorldLoc.y, clawWorldLoc.z)
                 // + "\nCLAW RELATIVE: " + clawLocationRelative.x + ", " + clawLocationRelative.y + ", " + clawLocationRelative.z
-                + "\nCLAW RELATIVE ROBOT ROTATED: " + String.format("%.2f, %.2f, %.2f", robotRelativeClawReal[0], clawLocationRelative.y, robotRelativeClawReal[1]) // + robotRelativeClawReal[0] + ", " + clawLocationRelative.y + ", " + robotRelativeClawReal[1]
-                + "\nTARGET: " + String.format("%.2f, %.2f, %.2f", targetLocation.x, targetLocation.y, targetLocation.z) // + targetLocation.x + ", " + targetLocation.y + ", " + targetLocation.z
+                + "\nCLAW RELATIVE ROBOT ROTATED: " + String.format("%.2f, %.2f, %.2f", robotRelativeClawReal[0], clawLocationRelative.y, robotRelativeClawReal[1])
+                + "\nTARGET: " + String.format("%.2f, %.2f, %.2f", targetLocation.x, targetLocation.y, targetLocation.z)
                 // + "\nCAMERA COORDS: " + cam.getLocation().x + ", " + cam.getLocation().y + ", " + cam.getLocation().z
                 + "\nRobot pose: " + getRobotPose()
                 + "\nFieldPoseClaw: " + fieldPoseClaw
@@ -537,9 +537,6 @@ public class Armvisualiser extends SimpleApplication {
             setTurretAngle(armAngles[2]);
         }
         updateHUDText();
-
-
-        // System.out.println("REAL REAL: " + arm1AngleRad * FastMath.RAD_TO_DEG + ", " + arm2AngleRad * FastMath.RAD_TO_DEG + ", " + turretAngleRad * FastMath.RAD_TO_DEG);
     }
 
     @Override
