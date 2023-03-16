@@ -25,9 +25,14 @@ import com.jme3.scene.Spatial;
 import com.jme3.scene.shape.Box;
 import com.jme3.shadow.DirectionalLightShadowRenderer;
 import com.jme3.system.AppSettings;
+import edu.wpi.first.math.WPIMathJNI;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.networktables.NetworkTableInstance;
+import edu.wpi.first.networktables.NetworkTablesJNI;
+import edu.wpi.first.util.CombinedRuntimeLoader;
+import edu.wpi.first.util.WPIUtilJNI;
 import jme3tools.optimize.GeometryBatchFactory;
 
 import java.io.IOException;
@@ -145,8 +150,19 @@ public class Armvisualiser extends SimpleApplication {
         })).start();
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException {Constants.FieldConstants.GamePiecePlacementLocationConstants.poke();
-        NetworkTablesWrapper.init();
+    public static void main(String[] args) throws InterruptedException, IOException {
+        NetworkTablesJNI.Helper.setExtractOnStaticLoad(false);
+        WPIUtilJNI.Helper.setExtractOnStaticLoad(false);
+        WPIMathJNI.Helper.setExtractOnStaticLoad(false);
+
+        CombinedRuntimeLoader.loadLibraries(Armvisualiser.class, "wpiutiljni", "wpimathjni", "ntcorejni");
+
+        NetworkTableInstance inst = NetworkTableInstance.getDefault();
+        inst.startClient4("Robot 3D Gui");
+        inst.setServer("localhost");
+        inst.startDSClient();
+
+        Constants.FieldConstants.GamePiecePlacementLocationConstants.poke();
         Thread.sleep(50);
         Armvisualiser app = new Armvisualiser(); // Instantiate the app
         app.showSettings = false; // This stops the settings screen from appearing. Only uncomment this line after you've set your initial settings once.
@@ -525,7 +541,8 @@ public class Armvisualiser extends SimpleApplication {
     @Override
     public void simpleUpdate(float tpf) {
         //this method will be called every game tick and can be used to make updates
-        Pose2d pos = NetworkTablesWrapper.getRobotPose();
+        Pose2d pos = NetworkTablesWrapper.getJetsonPose();
+        // System.out.println("jetson pose: " + pos);
         if(!(pos.getX() == 0 && pos.getY() == 0)) {
             this.robotNode.setLocalTranslation(new Vector3f((float) pos.getX(), this.robotNode.getLocalTranslation().y, (float) pos.getY()));
             setRobotNodeAngle(pos.getRotation().getRadians());

@@ -12,7 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class NetworkTablesWrapper {
-    private static final NetworkTableInstance INSTANCE = NetworkTableInstance.getDefault();
+    private static final NetworkTableInstance NT_INST = NetworkTableInstance.getDefault();
     private static final Map<String, GenericPublisher> publishers = new HashMap<>();
     private static final Map<String, GenericSubscriber> subscribers = new HashMap<>();
 
@@ -22,7 +22,7 @@ public class NetworkTablesWrapper {
      * @return {@link NetworkTableInstance} used
      */
     public static NetworkTableInstance getNTInstance() {
-        return INSTANCE;
+        return NT_INST;
     }
 
     /**
@@ -32,7 +32,7 @@ public class NetworkTablesWrapper {
      * @return {@link NetworkTable} corresponding
      */
     public static NetworkTable getTable(String tableName) {
-        return INSTANCE.getTable(tableName);
+        return NT_INST.getTable(tableName);
     }
 
     /**
@@ -77,9 +77,10 @@ public class NetworkTablesWrapper {
 
         CombinedRuntimeLoader.loadLibraries(Armvisualiser.class, "wpiutiljni", "wpimathjni", "ntcorejni");
 
-        NetworkTableInstance inst = NetworkTableInstance.getDefault();
-        inst.startClient4("Robot 3D GUI");
-        inst.startDSClient();
+        NT_INST.startClient4("Robot 3D GUI");
+        NT_INST.setServer("localhost");
+        NT_INST.startDSClient();
+        System.out.println(NT_INST.isConnected());
     }
 
     public static Pose2d getJetsonPose() {
