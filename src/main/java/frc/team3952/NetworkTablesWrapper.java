@@ -98,6 +98,14 @@ public class NetworkTablesWrapper {
     }
 
     public static double[] getArmTargetCoordinates() {
-        return getEntry("robot", "arm_target_coords").getDoubleArray(new double[] {0, 0, 0});
+        return getEntry("robot", "target").getDoubleArray(new double[] {0, 0, 0});
+    }
+
+    public static boolean getAtHumanPlayer() {
+        return getEntry("robot", "atHumanPlayer").getBoolean(false);
+    }
+
+    public static boolean get2dMode() {
+        return getEntry("robot", "2dMode").getBoolean(false);
     }
 }

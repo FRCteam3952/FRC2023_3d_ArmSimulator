@@ -173,7 +173,7 @@ public final class Constants {
      */
     public static class FieldConstants {
         public static final double FIELD_Y_LENGTH = 315.5;
-        public static final double FIELD_X_LENGTH = 651.25;
+        public static final double FIELD_X_LENGTH = 651.25; // 651.25
 
         /**
          * {@link RobotPlacementLocations#MINIMUM_X_LOCATION_TO_PLACE_FROM} represents the minimum X value (in a pose) that the robot can place a gamepiece from safely (i.e. not colliding into the structure).
@@ -229,16 +229,16 @@ public final class Constants {
          * This image would be reflected across the middle of the field, on a line parallel to the Y axis for the Red alliance's side.
          */
         public static class GamePiecePlacementLocationConstants {
-            public static final double Y_DISTANCE_TO_POLE_ONE       = 20.32;
-            public static final double Y_DISTANCE_TO_POLE_TWO       = 64.33;
-            public static final double Y_DISTANCE_TO_POLE_THREE     = 86.19;
-            public static final double Y_DISTANCE_TO_POLE_FOUR      = 130.33;
-            public static final double Y_DISTANCE_TO_POLE_FIVE      = 152.47;
-            public static final double Y_DISTANCE_TO_POLE_SIX       = 196.36;
+            public static final double Y_DISTANCE_TO_POLE_ONE       = 20.5;
+            public static final double Y_DISTANCE_TO_POLE_TWO       = 64.5;
+            public static final double Y_DISTANCE_TO_POLE_THREE     = 86.5;
+            public static final double Y_DISTANCE_TO_POLE_FOUR      = 130.5;
+            public static final double Y_DISTANCE_TO_POLE_FIVE      = 152.5;
+            public static final double Y_DISTANCE_TO_POLE_SIX       = 196.5;
 
-            public static final double Y_DISTANCE_TO_PLATFORM_ONE   = 42.48;
+            public static final double Y_DISTANCE_TO_PLATFORM_ONE   = 42.5;
             public static final double Y_DISTANCE_TO_PLATFORM_TWO   = 108.5;
-            public static final double Y_DISTANCE_TO_PLATFORM_THREE = 174.45;
+            public static final double Y_DISTANCE_TO_PLATFORM_THREE = 174.5;
 
             public static final double X_DISTANCE_TO_TOP_SECTION    = 15.0;
             public static final double X_DISTANCE_TO_MIDDLE_SECTION = 32.0;
